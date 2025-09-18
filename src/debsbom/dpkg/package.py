@@ -140,6 +140,15 @@ class Package(ABC):
     def purl(self) -> PackageURL:
         raise NotImplementedError
 
+    @property
+    @abstractmethod
+    def locator(self) -> str:
+        raise NotImplementedError()
+
+    @property
+    def filename(self) -> str:
+        return self.locator.split("/")[-1]
+
 
 @dataclass(init=False)
 class SourcePackage(Package):
@@ -150,6 +159,7 @@ class SourcePackage(Package):
     homepage: str | None = None
     vcs_browser: str | None = None
     vcs_git: str | None = None
+    _locator: str | None = None
 
     def __init__(
         self,
@@ -185,6 +195,15 @@ class SourcePackage(Package):
         return PackageURL.from_string(
             "pkg:deb/{}/{}@{}?arch=source".format(vendor, self.name, self.version)
         )
+
+    @property
+    def locator(self) -> str:
+        """Path to file if set or name of .dsc file"""
+        return self._locator or self.dscfile()
+
+    @locator.setter
+    def locator(self, loc) -> None:
+        self._locator = loc
 
     def dscfile(self) -> str:
         """Return the name of the .dsc file"""
@@ -232,6 +251,7 @@ class BinaryPackage(Package):
     homepage: str | None
     checksums: dict[ChecksumAlgo, str]
     manually_installed: bool
+    _locator: str | None = None
 
     def __init__(
         self,
@@ -275,6 +295,22 @@ class BinaryPackage(Package):
         if self.architecture:
             purl = purl + "?arch={}".format(self.architecture)
         return PackageURL.from_string(purl)
+
+    @property
+    def locator(self) -> str:
+        """Return the name (and path if available) of the .deb file"""
+        if self._locator:
+            return self._locator
+        # TODO: find where this filename format is specified
+        if self.version.debian_revision:
+            version_wo_epoch = f"{self.version.upstream_version}-{self.version.debian_revision}"
+        else:
+            version_wo_epoch = self.version.upstream_version
+        return f"{self.name}_{version_wo_epoch}_{self.architecture}.deb"
+
+    @locator.setter
+    def locator(self, loc) -> None:
+        self._locator = loc
 
     @staticmethod
     def from_dep822(package) -> "BinaryPackage":

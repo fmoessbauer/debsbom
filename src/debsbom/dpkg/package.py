@@ -342,11 +342,11 @@ class BinaryPackage(Package):
         self.manually_installed |= other.manually_installed
         if not self.depends:
             depends = list(self.depends)
-            depends.extend(x for x in other.binaries if x not in depends)
+            depends.extend(x for x in other.depends if x not in depends)
             self.depends = depends
         if not self.built_using:
             built_using = list(self.built_using)
-            built_using.extend(x for x in other.binaries if x not in built_using)
+            built_using.extend(x for x in other.built_using if x not in built_using)
             self.built_using = built_using
 
     @staticmethod

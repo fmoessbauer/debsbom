@@ -91,3 +91,18 @@ def test_parse_source_status_file():
     spkg = [p for p in packages if isinstance(p, SourcePackage)][1]
     assert spkg.name == "guestfs-tools"
     assert spkg.version == "1.52.3-1"
+
+
+def test_parse_pkgs_stream():
+    data = ["binutils-arm-none-eabi 2.40-2+18+b1 amd64", "binutils-bpf 2.40-2+1 amd64"]
+    pkgs_it = BinaryPackage.parse_pkglist_stream(data)
+
+    pkg: BinaryPackage = next(pkgs_it)
+    assert pkg.name == "binutils-arm-none-eabi"
+    assert pkg.version.debian_revision == "2+18+b1"
+    assert pkg.architecture == "amd64"
+
+    pkg: BinaryPackage = next(pkgs_it)
+    assert pkg.name == "binutils-bpf"
+    assert pkg.version.upstream_version == "2.40"
+    assert pkg.architecture == "amd64"

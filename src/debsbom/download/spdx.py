@@ -35,24 +35,6 @@ class SpdxPackageResolver(PackageResolver, SPDXType):
         return next(
             filter(lambda ref: ref.category == cat_pkg_manager, p.external_references), None)
 
-    @staticmethod
-    def is_debian_pkg(p):
-        if not p.external_references:
-            return False
-        # TODO: scan all references
-        if (
-            p.external_references[0].category
-            != spdx_package.ExternalPackageRefCategory.PACKAGE_MANAGER
-        ):
-            return False
-        return True
-
-    def debian_pkgs(self):
-        return map(
-            lambda p: self.package_from_purl(p.external_references[0].locator),
-            filter(self.is_debian_pkg, self._document.packages),
-        )
-
     @classmethod
     def is_debian_pkg(cls, p: spdx_package.Package) -> bool:
         ref = cls.package_manager_ref(p)
